@@ -1,0 +1,8 @@
+train: ./data/train
+val: ./data/val # 5000 images
+
+# number of classes
+nc: 1
+
+# class names
+names: [ 'chart']
