@@ -171,32 +171,35 @@ def is_chart(image_path):
 
 
 def detect_charts(pdf_file):
-  folder_path = os.path.dirname(pdf_file)
-  extracted_charts=[]
-  pdf_document = fitz.open(pdf_file)
-  for page_number in range(len(pdf_document)):
-    page = pdf_document[page_number]
-    pix = page.get_pixmap()
-    pix.save("page-%i.png" % page.number)
+    folder_path = os.path.dirname(pdf_file)
+    folder_path =os.path.join(folder_path,"charts")
+    if not os.path.isdir(folder_path):
+      os.mkdir(folder_path)
+    extracted_charts=[]
+    pdf_document = fitz.open(pdf_file)
+    for page_number in range(len(pdf_document)):
+      page = pdf_document[page_number]
+      pix = page.get_pixmap()
+      pix.save("page-%i.png" % page.number)
 
-    result_image ,bbox_list= detect_objects(f"page-{page.number}.png", model_weights, img_size=640, conf_thres=0.25, iou_thres=0.45, save_img=True)
+      result_image ,bbox_list= detect_objects(f"page-{page.number}.png", model_weights, img_size=640, conf_thres=0.25, iou_thres=0.45, save_img=True)
 
-    temp_path=f"page-{page.number}.png"
-    img = cv2.imread(temp_path)
+      temp_path=f"page-{page.number}.png"
+      img = cv2.imread(temp_path)
 
-    for img_index,bbox in enumerate(bbox_list):
+      for img_index,bbox in enumerate(bbox_list):
 
-      cropped_img= img[bbox[1]:bbox[3],bbox[0]:bbox[2]]
-      path=os.path.join(folder_path,f"image_{img_index}_{page_number}.png")
-      cv2.imwrite(path,cropped_img)
-      if is_chart(path):
-        chart_type=chart_classif(path)
-        chart_list={"page_no":page_number,"chart_type":chart_type[:-1],"chart_path":path,"bbox":bbox}
-        extracted_charts.append(chart_list)
-      else:
-        os.remove(path)
-    os.remove(temp_path)
-  return extracted_charts
+        cropped_img= img[bbox[1]:bbox[3],bbox[0]:bbox[2]]
+        path=os.path.join(folder_path,f"image_{img_index}_{page_number}.png")
+        cv2.imwrite(path,cropped_img)
+        if is_chart(path):
+          chart_type=chart_classif(path)
+          chart_list={"page_no":page_number,"chart_type":chart_type[:-1],"chart_path":path,"bbox":bbox}
+          extracted_charts.append(chart_list)
+        else:
+          os.remove(path)
+      os.remove(temp_path)
+    return extracted_charts
       # chart_classif(cropped_img)
 
 result=detect_charts("/workspaces/chart_detection/Wolters-Kluwer-2022-Annual Report-1 (1) (1).pdf")
